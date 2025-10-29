@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  localstack:
+    image: localstack/localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=sqs,dynamodb,s3,sns,lambda,apigateway
+      - DEBUG=1
+    volumes:
+      - ./infra:/etc/localstack/init
