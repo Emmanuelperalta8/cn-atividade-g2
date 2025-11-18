@@ -1,0 +1,44 @@
+{
+    "Configuration": {
+        "FunctionName": "ProcessarPedido",
+        "FunctionArn": "arn:aws:lambda:us-east-1:000000000000:function:ProcessarPedido",
+        "Runtime": "python3.10",
+        "Role": "arn:aws:iam::000000000000:role/fake-role",
+        "Handler": "processar_pedido.lambda_handler",
+        "CodeSize": 554,
+        "Description": "",
+        "Timeout": 3,
+        "MemorySize": 128,
+        "LastModified": "2025-11-18T09:26:37.143927+0000",
+        "CodeSha256": "TSY29gPqIVpyi3ZAOFmPrqibR+gwDygOp+UqkiTjk1U=",
+        "Version": "$LATEST",
+        "TracingConfig": {
+            "Mode": "PassThrough"
+        },
+        "RevisionId": "501b87fb-4129-49c2-9b9e-5846e440d468",
+        "State": "Active",
+        "LastUpdateStatus": "Successful",
+        "PackageType": "Zip",
+        "Architectures": [
+            "x86_64"
+        ],
+        "EphemeralStorage": {
+            "Size": 512
+        },
+        "SnapStart": {
+            "ApplyOn": "None",
+            "OptimizationStatus": "Off"
+        },
+        "RuntimeVersionConfig": {
+            "RuntimeVersionArn": "arn:aws:lambda:us-east-1::runtime:8eeff65f6809a3ce81507fe733fe09b835899b99481ba22fd75b5a7338290ec1"
+        },
+        "LoggingConfig": {
+            "LogFormat": "Text",
+            "LogGroup": "/aws/lambda/ProcessarPedido"
+        }
+    },
+    "Code": {
+        "RepositoryType": "S3",
+        "Location": "http://localhost.localstack.cloud:4566/awslambda-us-east-1-tasks/snapshots/000000000000/ProcessarPedido-69d42b53-101c-4d2f-bce4-3d531994a42c?AWSAccessKeyId=949334387222&Signature=IeOfjBK2W5yNaPrQoP5LEk3vWgw%3D&Expires=1763461746"
+    }
+}

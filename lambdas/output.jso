@@ -1,0 +1,1 @@
+{"errorMessage": "'Records'", "errorType": "KeyError", "requestId": "e3a1a4e2-5a5c-4df6-a677-b4eab76ab5b5", "stackTrace": ["  File \"/var/task/processar_pedido.py\", line 10, in lambda_handler\n    for record in event['Records']:\n"]}
