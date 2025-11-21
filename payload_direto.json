@@ -1,0 +1,7 @@
+{
+  "Records": [
+    {
+      "body": "{\"id\": \"pedido-1\", \"mesa\": \"Cliente 1\", \"itens\": [\"Pizza\", \"Refri\"]}"
+    }
+  ]
+}

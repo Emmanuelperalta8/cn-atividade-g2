@@ -1,89 +1,80 @@
-# 🍽️ Restaurante Serverless — Atividade G2
+# 🍽️ Sistema de Processamento de Pedidos - Restaurante
 
-Este projeto simula um sistema de pedidos para um restaurante utilizando arquitetura serverless com AWS Lambda, DynamoDB, SQS, S3 e SNS — tudo rodando localmente via [LocalStack](https://docs.localstack.cloud/).
+Um sistema serverless completo para processamento de pedidos de restaurante usando AWS Services e LocalStack para desenvolvimento local.
 
----
+## 📋 Visão Geral
 
-## 📦 Tecnologias e dependências
+Este projeto implementa uma arquitetura de microserviços para gerenciar pedidos em um restaurante, utilizando:
+- **AWS Lambda** para processamento serverless
+- **DynamoDB** para armazenamento de dados
+- **S3** para armazenamento de comprovantes em PDF
+- **SQS** para fila de processamento
+- **SNS** para notificações
+- **API Gateway** para exposição de endpoints REST
+- **LocalStack** para desenvolvimento local
 
-### Linguagem
+## 🏗️ Arquitetura
+
+Cliente (API) ↓ API Gateway ↓ Lambda (CriarPedido) ↓ DynamoDB (Armazenar) + SQS (Fila) ↓ Lambda (ProcessarPedido) ↓ S3 (Salvar PDF) + SNS (Notificar)
+
+Code
+
+## 📦 Estrutura do Projeto
+
+
+cn-atividade-g2/ ├── lambdas/ │ ├── criar_pedido.py # Lambda para criar pedidos │ ├── processar_pedido.py # Lambda para processar pedidos │ ├── utils/ │ │ ├── gerar_pdf.py # Função para gerar PDFs │ │ └── init.py │ ├── criar_pedido.zip # ZIP da Lambda CriarPedido │ └── processar_pedido.zip # ZIP da Lambda ProcessarPedido ├── docker-compose.yml # Configuração do LocalStack ├── setup_localstack.sh # Script de setup ├── test_pedidos.py # Testes automatizados ├── processar_manual.py # Script de processamento manual ├── requirements.txt # Dependências Python ├── .gitignore # Git ignore └── README.md # Este arquivo
+
+## 🚀 Início Rápido
+
+### Pré-requisitos
+- Docker e Docker Compose
 - Python 3.10+
+- pip (gerenciador de pacotes Python)
 
-### Dependências Python
-
-Instale com:
-
+### 1. Clonar o Repositório
 ```bash
-pip install boto3 weasyprint
-
-Instale via terminal:
+git clone https://github.com/Emmanuelperalta8/cn-atividade-g2.git
+cd cn-atividade-g2
+2. Criar Ambiente Virtual
+bash
+python3 -m venv venv
+source venv/bin/activate  # Linux/Mac
+# ou
+venv\Scripts\activate  # Windows
+3. Instalar Dependências
+bash
+pip install -r requirements.txt
+4. Iniciar LocalStack
+bash
+docker-compose up -d
+5. Setup do Sistema
+bash
+./setup_localstack.sh
+6. Processar Pedidos
+Em um terminal separado:
 
 bash
-sudo apt update
-sudo apt install zip curl
-
-1. Subir o LocalStack
-Se estiver usando Docker:
-
+python3 processar_manual.py
+📝 Uso
+Criar um Pedido
 bash
-docker run --rm -it -p 4566:4566 -p 4571:4571 localstack/localstack
+python3 << 'EOF'
+import json
+import boto3
 
-2. Criar recursos simulados
-bash
-awslocal dynamodb create-table \
-  --table-name Pedidos \
-  --attribute-definitions AttributeName=id,AttributeType=S \
-  --key-schema AttributeName=id,KeyType=HASH \
-  --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5
+lambda_client = boto3.client('lambda', endpoint_url='http://localhost:4566', region_name='us-east-1')
 
-awslocal sqs create-queue --queue-name pedidos
-awslocal s3 mb s3://comprovantes
-awslocal sns create-topic --name PedidosConcluidos
+response = lambda_client.invoke(
+    FunctionName='CriarPedido',
+    InvocationType='RequestResponse',
+    Payload=json.dumps({
+        'body': json.dumps({
+            'cliente': 'João Silva',
+            'itens': ['Pizza Margherita', 'Refrigerante'],
+            'mesa': 5
+        })
+    })
+)
 
-
-3. Empacotar e criar a função Lambda
-bash
-cd lambdas
-zip -r processar_pedido.zip processar_pedido.py utils/
-
-awslocal lambda create-function \
-  --function-name ProcessarPedido \
-  --runtime python3.10 \
-  --handler processar_pedido.lambda_handler \
-  --zip-file fileb://processar_pedido.zip \
-  --role arn:aws:iam::000000000000:role/fake-role
-
-
-4. Simular evento de pedido
-Crie o evento:
-
-bash
-echo '{"Records":[{"body":"{\"id\":\"12345\"}"}]}' > evento.json
-Invocar a função:
-
-bash
-awslocal lambda invoke \
-  --function-name ProcessarPedido \
-  --payload file://evento.json \
-  --cli-binary-format raw-in-base64-out \
-  resposta.json
-5. Verificar PDF gerado
-bash
-awslocal s3 ls s3://comprovantes
-awslocal s3 cp s3://comprovantes/12345.pdf ./comprovante.pdf
-
-
-📁 Estrutura do projeto
-Código
-restaurante-serverless/
-├── lambdas/
-│   ├── processar_pedido.py
-│   ├── criar_pedido.py
-│   ├── utils/
-│   │   └── gerar_pdf.py
-├── evento.json
-├── resposta.json
-├── README.md
-
-
-
+result = json.loads(response['Payload'].read())
+print(result)

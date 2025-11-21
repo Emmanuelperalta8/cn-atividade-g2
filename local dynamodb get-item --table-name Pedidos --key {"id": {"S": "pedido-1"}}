@@ -1,0 +1,29 @@
+{
+    "Item": {
+        "cliente": {
+            "S": "Cliente 1"
+        },
+        "itens": {
+            "L": [
+                {
+                    "S": "Pizza"
+                },
+                {
+                    "S": "Refri"
+                }
+            ]
+        },
+        "data_criacao": {
+            "S": "2025-11-21T00:00:00Z"
+        },
+        "id": {
+            "S": "pedido-1"
+        },
+        "mesa": {
+            "N": "1"
+        },
+        "status": {
+            "S": "RECEBIDO"
+        }
+    }
+}

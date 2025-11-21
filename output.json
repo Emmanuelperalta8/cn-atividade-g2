@@ -1,1 +1,1 @@
-{"errorMessage":"2025-11-18T10:51:34Z 957243cf-7e97-493a-86fe-3b3611e588d3 Task timed out after 10.00 seconds"}
+{"errorMessage": "Unable to import module 'processar_pedido': No module named 'reportlab'", "errorType": "Runtime.ImportModuleError", "requestId": "", "stackTrace": []}

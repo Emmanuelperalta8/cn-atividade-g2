@@ -1,70 +1,70 @@
 import json
-import boto3
 import uuid
+import boto3
+import os
+from datetime import datetime
 
-dynamodb = boto3.resource('dynamodb', endpoint_url='http://localhost:4566', region_name='us-east-1')
-sqs = boto3.client('sqs', endpoint_url='http://localhost:4566', region_name='us-east-1')
+# --- CONFIGURAÇÕES DE AMBIENTE ---
+# O LocalStack usa o Account ID 000000000000 por padrão.
+ENDPOINT = os.getenv("LOCALSTACK_ENDPOINT", "http://localhost:4566")
+REGION = "us-east-1"
+QUEUE_NAME = os.getenv("SQS_QUEUE_NAME", "pedidos")
+
+# --- CLIENTES BOTO3 ---
+# Passar o endpoint_url é crucial para o LocalStack
+dynamodb = boto3.resource("dynamodb", endpoint_url=ENDPOINT, region_name=REGION)
+sqs = boto3.client("sqs", endpoint_url=ENDPOINT, region_name=REGION)
+
+TABLE = dynamodb.Table("Pedidos")
+
+# Tenta obter a URL da fila dinamicamente (mais robusto)
+try:
+    response = sqs.get_queue_url(QueueName=QUEUE_NAME)
+    QUEUE_URL = response['QueueUrl']
+except Exception as e:
+    # Fallback se a URL não puder ser obtida (usando o formato LocalStack)
+    print(f"Aviso: Não foi possível obter QueueUrl dinamicamente. Usando fallback.")
+    QUEUE_URL = f"{ENDPOINT}/000000000000/{QUEUE_NAME}"
+
 
 def lambda_handler(event, context):
-    """
-    Cria um novo pedido:
-    1. Valida os dados de entrada
-    2. Salva no DynamoDB
-    3. Envia para fila SQS
-    """
-    
     try:
-        # Parse do corpo da requisição
-        body = json.loads(event['body'])
-        
-        # Validação dos campos obrigatórios
-        if not all(key in body for key in ['cliente', 'itens', 'mesa']):
-            return {
-                'statusCode': 400,
-                'body': json.dumps({'erro': 'Campos obrigatórios: cliente, itens, mesa'})
-            }
-        
-        # Gerar ID único do pedido
-        pedido_id = str(uuid.uuid4())
-        
-        # Preparar item para DynamoDB
-        item = {
-            'id': pedido_id,
-            'cliente': body['cliente'],
-            'itens': body['itens'],
-            'mesa': body['mesa'],
-            'status': 'recebido'
-        }
-        
-        # Salvar no DynamoDB
-        table = dynamodb.Table('Pedidos')
-        table.put_item(Item=item)
-        print(f"Pedido {pedido_id} salvo no DynamoDB")
-        
-        # Enviar para fila SQS
-        sqs.send_message(
-            QueueUrl='http://localhost:4566/000000000000/pedidos',
-            MessageBody=json.dumps({'id': pedido_id})
-        )
-        print(f"Pedido {pedido_id} enviado para fila SQS")
-        
-        # Retornar sucesso
-        return {
-            'statusCode': 200,
-            'body': json.dumps({
-                'mensagem': 'Pedido criado com sucesso',
-                'pedido_id': pedido_id
-            })
-        }
+        body = json.loads(event["body"])
+    except (TypeError, json.JSONDecodeError):
+        return {"statusCode": 400, "body": json.dumps({"mensagem": "Requisição inválida."})}
+
+    pedido_id = str(uuid.uuid4())
+
+    item = {
+        "id": pedido_id,
+        "cliente": body.get("cliente", "Não informado"),
+        "itens": body.get("itens", []),
+        "status": "RECEBIDO",
+        "data_criacao": datetime.utcnow().isoformat() + "Z",
+    }
     
-    except json.JSONDecodeError:
-        return {
-            'statusCode': 400,
-            'body': json.dumps({'erro': 'JSON inválido'})
-        }
-    except Exception as e:
-        print(f"Erro ao criar pedido: {str(e)}")
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'erro': str(e)})
-        }
+    # Lógica para evitar salvar 'None' no DynamoDB
+    mesa = body.get("mesa")
+    if mesa is not None:
+        item["mesa"] = mesa
+
+    # 1. Salvar no DynamoDB
+    TABLE.put_item(Item=item)
+    print(f"Pedido {pedido_id} salvo no DynamoDB.")
+
+    # 2. Enviar ID do pedido para o SQS
+    sqs.send_message(
+        QueueUrl=QUEUE_URL,
+        MessageBody=json.dumps({"pedido_id": pedido_id}),
+    )
+    print(f"ID do pedido {pedido_id} enviado para a fila SQS.")
+
+    return {
+        "statusCode": 201,
+        "body": json.dumps(
+            {
+                "mensagem": "Pedido criado com sucesso! Em processamento.",
+                "id": pedido_id,
+            }
+        ),
+    }
